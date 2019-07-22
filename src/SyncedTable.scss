@@ -1,0 +1,73 @@
+.syncedTableOuter {
+  * {
+    box-sizing: border-box;
+  }
+  position: relative;
+  .fakeBorder {
+    position: absolute;
+    border-top: 2px solid black;
+    border-left: 2px solid black;
+    z-index: 1;
+  }
+  .syncedTable {
+    overflow: auto;
+    position: relative;
+    .innerGrid {
+      position: relative;
+      overflow: hidden;
+      & > * {
+        overflow: hidden;
+      }
+      .corner {
+        position: absolute;
+        background-color: white;
+
+        &.nw {
+          border-right: 2px solid black;
+          border-bottom: 2px solid black;
+        }
+        &.ne {
+          border-left: 2px solid black;
+          border-bottom: 2px solid black;
+        }
+        &.sw {
+          border-right: 2px solid black;
+          border-top: 2px solid black;
+        }
+        &.se {
+          border-left: 2px solid black;
+          border-top: 2px solid black;
+        }
+      }
+      .topHeader {
+        border-bottom: 2px solid black;
+      }
+      .rightHeader {
+        border-left: 2px solid black;
+      }
+      .bottomHeader {
+        border-top: 2px solid black;
+      }
+      .leftHeader {
+        border-right: 2px solid black;
+      }
+    }
+  }
+}
+.syncedTableCell {
+  position: absolute;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  &.odd {
+    background-color: #bbbbbb;
+  }
+  &:not(.odd) {
+    background-color: white;
+  }
+}
+.syncedTableHeader {
+  font-weight: bold;
+  padding: 3px 5px;
+}
