@@ -1,0 +1,174 @@
+// .syncedTableOuter {
+//   * {
+//     box-sizing: border-box;
+//   }
+//   position: relative;
+//   .fakeBorder {
+//     position: absolute;
+//     border-top: 2px solid black;
+//     border-left: 2px solid black;
+//     z-index: 1;
+//   }
+//   .syncedTable {
+//     overflow: auto;
+//     position: relative;
+//     .innerGrid {
+//       position: relative;
+//       overflow: hidden;
+//       & > * {
+//         overflow: hidden;
+//       }
+//       .corner {
+//         position: absolute;
+//         background-color: white;
+
+//         &.nw {
+//           border-right: 2px solid black;
+//           border-bottom: 2px solid black;
+//         }
+//         &.ne {
+//           border-left: 2px solid black;
+//           border-bottom: 2px solid black;
+//         }
+//         &.sw {
+//           border-right: 2px solid black;
+//           border-top: 2px solid black;
+//         }
+//         &.se {
+//           border-left: 2px solid black;
+//           border-top: 2px solid black;
+//         }
+//       }
+//       .topHeader {
+//         border-bottom: 2px solid black;
+//       }
+//       .rightHeader {
+//         border-left: 2px solid black;
+//       }
+//       .bottomHeader {
+//         border-top: 2px solid black;
+//       }
+//       .leftHeader {
+//         border-right: 2px solid black;
+//       }
+//     }
+//   }
+// }
+// .syncedTableCell {
+//   position: absolute;
+//   overflow: hidden;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   &.odd {
+//     background-color: #bbbbbb;
+//   }
+//   &:not(.odd) {
+//     background-color: white;
+//   }
+// }
+// .syncedTableHeader {
+//   font-weight: bold;
+//   padding: 3px 5px;
+// }
+
+.stickyTableOuter {
+  * {
+    box-sizing: border-box;
+  }
+  position: relative;
+  overflow: hidden;
+  .fakeBorder {
+    position: absolute;
+    border-top: 2px solid black;
+    border-left: 2px solid black;
+    z-index: 3;
+  }
+  .stickyTable {
+    position: relative;
+    overflow: auto;
+    .innerGrid {
+      position: relative;
+      overflow: hidden;
+      & > * {
+        overflow: hidden;
+      }
+    }
+  }
+  .stickyTableCell {
+    position: absolute;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &.odd {
+      background-color: #bbbbbb;
+    }
+    &:not(.odd) {
+      background-color: white;
+    }
+  }
+  .corner {
+    z-index: 2;
+    position: sticky;
+    overflow: visible;
+    .cornerInner {
+      background-color: white;
+      position: absolute;
+      &.nw {
+        border-right: 2px solid black;
+        border-bottom: 2px solid black;
+      }
+      &.ne {
+        border-left: 2px solid black;
+        border-bottom: 2px solid black;
+      }
+      &.sw {
+        border-right: 2px solid black;
+        border-top: 2px solid black;
+      }
+      &.se {
+        border-left: 2px solid black;
+        border-top: 2px solid black;
+      }
+    }
+  }
+  .stickyHeader {
+    position: sticky;
+    z-index: 1;
+    &.topHeader {
+      top: 0;
+      & > * {
+        border-bottom: 2px solid black;
+      }
+    }
+    &.leftHeader {
+      left: 0;
+      & > * {
+        border-right: 2px solid black;
+      }
+    }
+    &.bottomHeader {
+      bottom: 0;
+      & > * {
+        border-top: 2px solid black;
+      }
+    }
+    &.rightHeader {
+      right: 0;
+      & > * {
+        border-left: 2px solid black;
+      }
+    }
+  }
+}
+
+.scrollbarDetector {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+  position: absolute;
+  left: 200px;
+  top: 200px;
+  overflow: scroll;
+}
