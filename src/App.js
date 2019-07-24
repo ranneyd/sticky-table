@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 
-import { SyncedTable } from "./SyncedTable";
+import { StickyTable } from "./StickyTable";
 import "./App.css";
 
 const App = () => {
-  const [rowCount, setRowCount] = useState(100);
-  const [colCount, setColCount] = useState(100);
+  const [rowCount, setRowCount] = useState(200);
+  const [colCount, setColCount] = useState(200);
   const [width, setWidth] = useState(700);
   const [height, setHeight] = useState(500);
   const [stickies, setStickies] = useState({
@@ -34,7 +34,7 @@ const App = () => {
   for (let rowI = 0; rowI < rowCount; ++rowI) {
     let row = [];
     for (let colI = 0; colI < colCount; ++colI) {
-      row.push(`row: ${rowI}, col" ${colI}`);
+      row.push(`row: ${rowI}, col ${colI}`);
     }
     data.push(row);
     if (stickies.left) {
@@ -119,7 +119,7 @@ const App = () => {
         />
       </div>
       <div className="grid">
-        <SyncedTable
+        <StickyTable
           data={data}
           width={width}
           height={height}
@@ -128,6 +128,8 @@ const App = () => {
           rightData={rightData}
           bottomData={bottomData}
           leftData={leftData}
+          rightWidth={50}
+          bottomHeight={100}
         />
       </div>
     </div>
