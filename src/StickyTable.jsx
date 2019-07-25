@@ -3,7 +3,7 @@ import React, { useMemo, useRef } from "react";
 import * as R from "ramda";
 
 import useScrollbarSizes from "./useScrollbarSizes";
-import useVirtualize from "./useVirtualize";
+import useVirtualize from "./useVirtual";
 
 import "./StickyTable.scss";
 
@@ -12,13 +12,11 @@ const DEFAULT_HEIGHT = 50;
 
 // Basically a rehash of https://github.com/bvaughn/react-window with position: sticky
 
-const basicRenderer = ({ data, style, classes }) => (
-  <div style={style} className={classes.join(" ")}>
-    {data}
-  </div>
-);
-
-const allButDataEqual = (prev, next) => {
+// Virtual and Data are values that get passed to our various sub-elements. They are large objects. I don't want to
+// deeply compare each object when it's time to check if we should re-render. So deep equal everything but those two.
+// We'll do a shallow check on data. Virtual is a little particular (vertical headers only care if the row sub-object
+// changes; no need to re-render if column virtual data changes) so we leave that comparison to the parent.
+const allButDataAndVirtualEqual = (prev, next) => {
   if (prev.data !== next.data) {
     return false;
   }
@@ -26,13 +24,14 @@ const allButDataEqual = (prev, next) => {
     R.props(
       R.pipe(
         R.keys,
-        R.without("data")
+        R.without(["data", "virtual"])
       )(obj),
       obj
     );
   return R.equals(getAllButData(prev), getAllButData(next));
 };
 
+// Don't do much but memoize and run the render function.
 const TableCell = React.memo(
   ({
     data,
@@ -48,33 +47,24 @@ const TableCell = React.memo(
       data,
       style: {
         ...style,
-        width:
-          typeof columnWidth === "function"
-            ? columnWidth(columnIndex)
-            : columnWidth,
-        height:
-          typeof rowHeight === "function" ? rowHeight(rowIndex) : rowHeight
+        width: columnWidth,
+        height: rowHeight
       },
       classes: ["stickyTableCell", ...classes],
       rowIndex,
       columnIndex
     }),
-
-  allButDataEqual
+  allButDataAndVirtualEqual
 );
 
+// This is the actual grid. It needs to do a 2d for loop
 const TableGrid = React.memo(
-  ({
-    data,
-    alternateColors,
-    columnWidth,
-    rowHeight,
-    visibleIndices,
-    renderer
-  }) => {
+  ({ data, alternateColors, virtual, renderer }) => {
+    const { cols, rows } = virtual;
     let items = [];
-    for (let i = visibleIndices.rows.min; i <= visibleIndices.rows.max; ++i) {
-      for (let j = visibleIndices.cols.min; j <= visibleIndices.cols.max; ++j) {
+    // Only render items that our virtualization says we should
+    for (let i = rows.visible.min; i <= rows.visible.max; ++i) {
+      for (let j = cols.visible.min; j <= cols.visible.max; ++j) {
         const classes = [];
         if (alternateColors && i % 2) {
           classes.push("odd");
@@ -87,11 +77,11 @@ const TableGrid = React.memo(
             data={data[i][j]}
             rowIndex={i}
             columnIndex={j}
-            columnWidth={columnWidth}
-            rowHeight={rowHeight}
+            columnWidth={cols.sizes[j]}
+            rowHeight={rows.sizes[i]}
             style={{
-              top: i * rowHeight,
-              left: j * columnWidth
+              top: rows.positions[i],
+              left: cols.positions[j]
             }}
           />
         );
@@ -99,34 +89,38 @@ const TableGrid = React.memo(
     }
     return <div className="actualGrid">{items}</div>;
   },
-  allButDataEqual
+  (prev, next) => {
+    // We depend on the row and col sub-objects, so if they aren't shallow-equal that's good enough to know we have to
+    // re-render.
+    if (prev.virtual !== next.virtual) {
+      return false;
+    }
+    return allButDataAndVirtualEqual(prev, next);
+  }
 );
 
+// Horizontal header bars. These take a 1d data prop and some offsets for positioning
 const TableHeaderRow = React.memo(
-  ({
-    data,
-    className,
-    leftWidth = 0,
-    top = 0,
-    columnWidth,
-    rowHeight,
-    visibleIndices,
-    renderer
-  }) => {
+  ({ data, className, leftWidth = 0, top = 0, height, virtual, renderer }) => {
+    const { cols } = virtual;
+    const { visible, sizes, positions } = cols;
+
     let items = [];
-    for (let i = visibleIndices.cols.min; i <= visibleIndices.cols.max; ++i) {
+    for (let i = visible.min; i <= visible.max; ++i) {
       items.push(
         <TableCell
           key={i}
           renderer={renderer}
           data={data[i]}
+          // Only one row!
           rowIndex={0}
           columnIndex={i}
+          // our odd/even alternating only happens for rows. This is only one row.
           odd={false}
-          columnWidth={columnWidth}
-          rowHeight={rowHeight}
+          columnWidth={sizes[i]}
+          rowHeight={height}
           style={{
-            left: leftWidth + i * columnWidth
+            left: leftWidth + positions[i]
           }}
         />
       );
@@ -135,7 +129,7 @@ const TableHeaderRow = React.memo(
       <div
         className={["stickyHeader", className].join(" ")}
         style={{
-          height: rowHeight,
+          height,
           top
         }}
       >
@@ -143,22 +137,31 @@ const TableHeaderRow = React.memo(
       </div>
     );
   },
-  allButDataEqual
+  (prev, next) => {
+    // If virtual.rows changes, we don't care, so we can still return true. If the cols change, we need to re-render
+    if (prev.virtual.cols !== next.virtual.cols) {
+      return false;
+    }
+    return allButDataAndVirtualEqual(prev, next);
+  }
 );
 
+// The vertical headers. These also only take 1d arrays for data
 const TableHeaderCol = React.memo(
   ({
     data,
     alternateColors,
     className,
     left = 0,
-    columnWidth,
-    rowHeight,
-    visibleIndices,
+    width,
+    virtual,
     renderer
   }) => {
+    const { rows } = virtual;
+    const { visible, sizes, positions } = rows;
+
     let items = [];
-    for (let i = visibleIndices.rows.min; i <= visibleIndices.rows.max; ++i) {
+    for (let i = visible.min; i <= visible.max; ++i) {
       const classes = [];
       if (alternateColors && i % 2) {
         classes.push("odd");
@@ -171,10 +174,10 @@ const TableHeaderCol = React.memo(
           data={data[i]}
           rowIndex={i}
           columnIndex={0}
-          columnWidth={columnWidth}
-          rowHeight={rowHeight}
+          columnWidth={width}
+          rowHeight={sizes[i]}
           style={{
-            top: i * rowHeight
+            top: positions[i]
           }}
         />
       );
@@ -183,7 +186,7 @@ const TableHeaderCol = React.memo(
       <div
         className={["stickyHeader", className].join(" ")}
         style={{
-          width: columnWidth,
+          width,
           left
         }}
       >
@@ -191,9 +194,19 @@ const TableHeaderCol = React.memo(
       </div>
     );
   },
-  allButDataEqual
+  (prev, next) => {
+    if (prev.virtual.rows !== next.virtual.rows) {
+      return false;
+    }
+    return allButDataAndVirtualEqual(prev, next);
+  }
 );
 
+// These corners have z-index: 2 and sit above the headers. To get properly synchronized positioning, they also need
+// "position: sticky". However, if they have a width or height, they'll offset the headers, kind of defeating the
+// purpose. We can get around this by actually giving them a height/width of 0, giving them "overflow: visible", and
+// sizing the sub-divs. The exception is some hackery for the right-side corners: they need to actually have a width to
+// appear properly, so we take a flag to determine if the outer div should have the same width.
 const Corner = React.memo(
   ({ outerWidth = false, className, width, height, top, left }) => (
     <div
@@ -211,12 +224,22 @@ const Corner = React.memo(
   )
 );
 
-// The props will be directly mapped to styles. This is better than taking a style object because we get that free
-// shallow-equality memoization. It's also more declarative in the react code
+// When we don't have a border on a side, we want to replace it with a simple border to keep things looking neat. This
+// is done simply with absolute positioning. The props will be directly mapped to styles. This is better than taking a
+// style object because we get that free shallow-equality memoization. It's also more declarative in the react code
 const FakeBorder = React.memo(style => (
   <div className="fakeBorder" style={style} />
 ));
 
+// Basic cell renderer. If someone wants to provide a custom function but only wants to change it slightly from the
+// default, they can use a wrapper around this.
+export const basicRenderer = ({ data, style, classes }) => (
+  <div style={style} className={classes.join(" ")}>
+    {data}
+  </div>
+);
+
+// This is where the magic happens!
 export const StickyTable = ({
   topData,
   rightData,
@@ -239,6 +262,7 @@ export const StickyTable = ({
   leftRenderer = basicRenderer,
   overscan = 10
 }) => {
+  // This goes on the outermost div. We just use it for the scrollbar hook.
   const containerRef = useRef();
   const scrollbarSizes = useScrollbarSizes(containerRef);
 
@@ -316,7 +340,18 @@ export const StickyTable = ({
     viewHeight += scrollbarSizes.height;
   }
 
-  let [visibleIndices, setLeft, setTop] = useVirtualize({
+  console.log(
+    "ok render this shit",
+    rightLeftPos,
+    scrollbarSizes.width,
+    viewWidth,
+    width,
+    totalWidth,
+    rightWidth,
+    contentWidth
+  );
+
+  let [virtual, setLeft, setTop] = useVirtualize({
     overscan,
     columnCount: data[0].length,
     rowCount: data.length,
@@ -325,6 +360,8 @@ export const StickyTable = ({
     width: viewWidth - leftWidth - rightWidth,
     height: viewHeight - topHeight - bottomHeight
   });
+
+  console.log(virtual);
 
   return (
     <div
@@ -389,9 +426,8 @@ export const StickyTable = ({
             data={topData}
             className="topHeader"
             leftWidth={leftWidth}
-            columnWidth={columnWidth}
-            rowHeight={topHeight}
-            visibleIndices={visibleIndices}
+            height={topHeight}
+            virtual={virtual}
             renderer={topRenderer}
           />
         )}
@@ -399,9 +435,8 @@ export const StickyTable = ({
           <TableHeaderCol
             data={leftData}
             className="leftHeader"
-            columnWidth={leftWidth}
-            rowHeight={rowHeight}
-            visibleIndices={visibleIndices}
+            width={leftWidth}
+            virtual={virtual}
             renderer={leftRenderer}
           />
         )}
@@ -410,9 +445,8 @@ export const StickyTable = ({
             data={rightData}
             className="rightHeader"
             left={rightLeftPos}
-            columnWidth={rightWidth}
-            rowHeight={rowHeight}
-            visibleIndices={visibleIndices}
+            width={rightWidth}
+            virtual={virtual}
             renderer={rightRenderer}
           />
         )}
@@ -422,9 +456,8 @@ export const StickyTable = ({
             className="bottomHeader"
             top={bottomTopPos}
             leftWidth={leftWidth}
-            columnWidth={columnWidth}
-            rowHeight={bottomHeight}
-            visibleIndices={visibleIndices}
+            height={bottomHeight}
+            virtual={virtual}
             renderer={bottomRenderer}
           />
         )}
@@ -444,9 +477,7 @@ export const StickyTable = ({
             alternateColors={alternateColors}
             top={topHeight}
             left={leftWidth}
-            columnWidth={columnWidth}
-            rowHeight={rowHeight}
-            visibleIndices={visibleIndices}
+            virtual={virtual}
             renderer={cellRenderer}
           />
         </div>

@@ -1,76 +1,5 @@
-// .syncedTableOuter {
-//   * {
-//     box-sizing: border-box;
-//   }
-//   position: relative;
-//   .fakeBorder {
-//     position: absolute;
-//     border-top: 2px solid black;
-//     border-left: 2px solid black;
-//     z-index: 1;
-//   }
-//   .syncedTable {
-//     overflow: auto;
-//     position: relative;
-//     .innerGrid {
-//       position: relative;
-//       overflow: hidden;
-//       & > * {
-//         overflow: hidden;
-//       }
-//       .corner {
-//         position: absolute;
-//         background-color: white;
-
-//         &.nw {
-//           border-right: 2px solid black;
-//           border-bottom: 2px solid black;
-//         }
-//         &.ne {
-//           border-left: 2px solid black;
-//           border-bottom: 2px solid black;
-//         }
-//         &.sw {
-//           border-right: 2px solid black;
-//           border-top: 2px solid black;
-//         }
-//         &.se {
-//           border-left: 2px solid black;
-//           border-top: 2px solid black;
-//         }
-//       }
-//       .topHeader {
-//         border-bottom: 2px solid black;
-//       }
-//       .rightHeader {
-//         border-left: 2px solid black;
-//       }
-//       .bottomHeader {
-//         border-top: 2px solid black;
-//       }
-//       .leftHeader {
-//         border-right: 2px solid black;
-//       }
-//     }
-//   }
-// }
-// .syncedTableCell {
-//   position: absolute;
-//   overflow: hidden;
-//   display: flex;
-//   justify-content: center;
-//   align-items: center;
-//   &.odd {
-//     background-color: #bbbbbb;
-//   }
-//   &:not(.odd) {
-//     background-color: white;
-//   }
-// }
-// .syncedTableHeader {
-//   font-weight: bold;
-//   padding: 3px 5px;
-// }
+$border-size: 2px;
+$border-color: black;
 
 .stickyTableOuter {
   * {
@@ -80,8 +9,8 @@
   overflow: hidden;
   .fakeBorder {
     position: absolute;
-    border-top: 2px solid black;
-    border-left: 2px solid black;
+    border-top: $border-size solid $border-color;
+    border-left: $border-size solid $border-color;
     z-index: 3;
   }
   .stickyTable {
@@ -116,20 +45,20 @@
       background-color: white;
       position: absolute;
       &.nw {
-        border-right: 2px solid black;
-        border-bottom: 2px solid black;
+        border-right: $border-size solid $border-color;
+        border-bottom: $border-size solid $border-color;
       }
       &.ne {
-        border-left: 2px solid black;
-        border-bottom: 2px solid black;
+        border-left: $border-size solid $border-color;
+        border-bottom: $border-size solid $border-color;
       }
       &.sw {
-        border-right: 2px solid black;
-        border-top: 2px solid black;
+        border-right: $border-size solid $border-color;
+        border-top: $border-size solid $border-color;
       }
       &.se {
-        border-left: 2px solid black;
-        border-top: 2px solid black;
+        border-left: $border-size solid $border-color;
+        border-top: $border-size solid $border-color;
       }
     }
   }
@@ -139,36 +68,26 @@
     &.topHeader {
       top: 0;
       & > * {
-        border-bottom: 2px solid black;
+        border-bottom: $border-size solid $border-color;
       }
     }
     &.leftHeader {
       left: 0;
       & > * {
-        border-right: 2px solid black;
+        border-right: $border-size solid $border-color;
       }
     }
     &.bottomHeader {
       bottom: 0;
       & > * {
-        border-top: 2px solid black;
+        border-top: $border-size solid $border-color;
       }
     }
     &.rightHeader {
       right: 0;
       & > * {
-        border-left: 2px solid black;
+        border-left: $border-size solid $border-color;
       }
     }
   }
-}
-
-.scrollbarDetector {
-  width: 100px;
-  height: 100px;
-  background-color: red;
-  position: absolute;
-  left: 200px;
-  top: 200px;
-  overflow: scroll;
 }
