@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 
 import * as R from "ramda";
 
@@ -18,17 +18,6 @@ const basicRenderer = ({ data, style, classes }) => (
   </div>
 );
 
-const TableCell = React.memo(
-  ({ data, classes = [], style, rowIndex, columnIndex, renderer }) =>
-    renderer({
-      data,
-      style,
-      classes: ["stickyTableCell", ...classes],
-      rowIndex,
-      columnIndex
-    })
-);
-
 const allButDataEqual = (prev, next) => {
   if (prev.data !== next.data) {
     return false;
@@ -44,6 +33,36 @@ const allButDataEqual = (prev, next) => {
   return R.equals(getAllButData(prev), getAllButData(next));
 };
 
+const TableCell = React.memo(
+  ({
+    data,
+    classes = [],
+    style,
+    rowIndex,
+    columnIndex,
+    columnWidth,
+    rowHeight,
+    renderer
+  }) =>
+    renderer({
+      data,
+      style: {
+        ...style,
+        width:
+          typeof columnWidth === "function"
+            ? columnWidth(columnIndex)
+            : columnWidth,
+        height:
+          typeof rowHeight === "function" ? rowHeight(rowIndex) : rowHeight
+      },
+      classes: ["stickyTableCell", ...classes],
+      rowIndex,
+      columnIndex
+    }),
+
+  allButDataEqual
+);
+
 const TableGrid = React.memo(
   ({
     data,
@@ -54,8 +73,8 @@ const TableGrid = React.memo(
     renderer
   }) => {
     let items = [];
-    for (let i = visibleIndices.rows.min; i < visibleIndices.rows.max; ++i) {
-      for (let j = visibleIndices.cols.min; j < visibleIndices.cols.max; ++j) {
+    for (let i = visibleIndices.rows.min; i <= visibleIndices.rows.max; ++i) {
+      for (let j = visibleIndices.cols.min; j <= visibleIndices.cols.max; ++j) {
         const classes = [];
         if (alternateColors && i % 2) {
           classes.push("odd");
@@ -68,9 +87,9 @@ const TableGrid = React.memo(
             data={data[i][j]}
             rowIndex={i}
             columnIndex={j}
+            columnWidth={columnWidth}
+            rowHeight={rowHeight}
             style={{
-              width: columnWidth,
-              height: rowHeight,
               top: i * rowHeight,
               left: j * columnWidth
             }}
@@ -95,7 +114,7 @@ const TableHeaderRow = React.memo(
     renderer
   }) => {
     let items = [];
-    for (let i = visibleIndices.cols.min; i < visibleIndices.cols.max; ++i) {
+    for (let i = visibleIndices.cols.min; i <= visibleIndices.cols.max; ++i) {
       items.push(
         <TableCell
           key={i}
@@ -104,9 +123,9 @@ const TableHeaderRow = React.memo(
           rowIndex={0}
           columnIndex={i}
           odd={false}
+          columnWidth={columnWidth}
+          rowHeight={rowHeight}
           style={{
-            width: columnWidth,
-            height: rowHeight,
             left: leftWidth + i * columnWidth
           }}
         />
@@ -139,7 +158,7 @@ const TableHeaderCol = React.memo(
     renderer
   }) => {
     let items = [];
-    for (let i = visibleIndices.rows.min; i < visibleIndices.rows.max; ++i) {
+    for (let i = visibleIndices.rows.min; i <= visibleIndices.rows.max; ++i) {
       const classes = [];
       if (alternateColors && i % 2) {
         classes.push("odd");
@@ -152,9 +171,9 @@ const TableHeaderCol = React.memo(
           data={data[i]}
           rowIndex={i}
           columnIndex={0}
+          columnWidth={columnWidth}
+          rowHeight={rowHeight}
           style={{
-            width: columnWidth,
-            height: rowHeight,
             top: i * rowHeight
           }}
         />
@@ -237,8 +256,26 @@ export const StickyTable = ({
   }
 
   // Size of the actual grid. The grid table will need to have these dimensions
-  let contentWidth = data[0].length * columnWidth;
-  let contentHeight = data.length * rowHeight;
+  const [contentWidth, contentHeight] = useMemo(() => {
+    let width = 0;
+    let height = 0;
+    if (typeof columnWidth === "function") {
+      for (let i = 0; i < data[0].length; ++i) {
+        width += columnWidth(i);
+      }
+    } else {
+      width = columnWidth * data[0].length;
+    }
+
+    if (typeof rowHeight === "function") {
+      for (let i = 0; i < data.length; ++i) {
+        height += rowHeight(i);
+      }
+    } else {
+      height = rowHeight * data.length;
+    }
+    return [width, height];
+  }, [data, columnWidth, rowHeight]);
 
   // Size of the grid plus all the headers. The containing div will need to have these dimensions
   let totalWidth = leftWidth + rightWidth + contentWidth;

@@ -6,8 +6,6 @@ export default ref => {
     height: 0
   });
   useLayoutEffect(() => {
-    console.log("layout the boi");
-
     let detector = document.createElement("div");
     detector.style.width = "1000px";
     detector.style.height = "1000px";
