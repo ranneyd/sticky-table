@@ -279,7 +279,9 @@ export const StickyTable = ({
     leftWidth = 0;
   }
 
-  // Size of the actual grid. The grid table will need to have these dimensions
+  // Size of the actual grid. The grid table will need to have these dimensions. Because we have custom size functions,
+  // we have to iterate over the entire data object and aggregate the dimensions. For large data sets this can be
+  // expensive. This only needs to be re-computed when the sizes or data change, so memoize!
   const [contentWidth, contentHeight] = useMemo(() => {
     let width = 0;
     let height = 0;
@@ -306,14 +308,18 @@ export const StickyTable = ({
   let totalHeight = topHeight + bottomHeight + contentHeight;
 
   let viewWidth, viewHeight, hasVertScroll, hasHorizScroll;
-  if (totalWidth > width) {
+  // If the size of the interior table is greater than its view, there will be scroll bars. Additionally, the box will
+  // be the full size of the view. If the interior is smaller than the view, there are no scroll bars and we want the
+  // view to only be as big as the interior. If the interior plus scroll bars is greater than the outside, just include
+  // them.
+  if (totalWidth + scrollbarSizes.width > width) {
     hasHorizScroll = true;
     viewWidth = width;
   } else {
     hasHorizScroll = false;
     viewWidth = totalWidth;
   }
-  if (totalHeight > height) {
+  if (totalHeight + scrollbarSizes.height > height) {
     hasVertScroll = true;
     viewHeight = height;
   } else {
@@ -326,31 +332,31 @@ export const StickyTable = ({
   let rightLeftPos = viewWidth - rightWidth;
   let bottomTopPos = viewHeight - bottomHeight;
 
+  // If there are scroll bars, we're going to need to tweak some sizing and positioning.
   if (hasVertScroll || hasHorizScroll) {
+    // If there are scroll bars on both sides, we need to move all our headers, corners, and fake borders over the size
+    // of the scroll bars. If there is only one scroll bar, the side that doesn't have one is smaller than the box. Thus
+    // the view was shrunk to only be the full size of the content. However, that content is now being pushed a little
+    // by the scroll bar in the other direction, requiring us to scroll that tiny amount. So expand that width
     if (hasVertScroll && hasHorizScroll) {
-      rightLeftPos -= scrollbarSizes.width;
+      rightLeftPos -= Math.max(scrollbarSizes.width, width - viewWidth);
       bottomTopPos -= scrollbarSizes.height;
     } else if (hasVertScroll) {
       viewWidth += scrollbarSizes.width;
     } else {
       viewHeight += scrollbarSizes.height;
     }
-  } else {
-    viewWidth += scrollbarSizes.width;
-    viewHeight += scrollbarSizes.height;
   }
 
-  console.log(
-    "ok render this shit",
-    rightLeftPos,
-    scrollbarSizes.width,
-    viewWidth,
-    width,
-    totalWidth,
-    rightWidth,
-    contentWidth
-  );
-
+  // Given all relevant data, get virtual information. This includes
+  // - Minimum and maximum rows/columns that must be rendered to populate the viewable box (the ranges that, if you're
+  //   looking at an element outside that range, you don't have to render it).
+  // - Dimensions of elements
+  // - Absolute positions of elements
+  // In order to get the virtualization (min/max) information, we have to compute the positions, and in order to compute
+  // the positions, we need the sizes. Thus, we just handle and return all this information so we don't have to repeat
+  // the work. This takes overscanning into account. Since this is the only thing that is hooking into the scroll
+  // events on the div, we provide our own setters and keep the state internally.
   let [virtual, setLeft, setTop] = useVirtualize({
     overscan,
     columnCount: data[0].length,
@@ -360,8 +366,6 @@ export const StickyTable = ({
     width: viewWidth - leftWidth - rightWidth,
     height: viewHeight - topHeight - bottomHeight
   });
-
-  console.log(virtual);
 
   return (
     <div

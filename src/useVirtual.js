@@ -1,7 +1,9 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 
-// https://github.com/bvaughn/react-window/blob/master/src/VariableSizeGrid.js
-// See "findNearestItemBinarySearch"
+// https://github.com/bvaughn/react-window/blob/master/src/VariableSizeGrid.js See "findNearestItemBinarySearch". This
+// is a binary search to find the index of the position to the left (or right) of an element at a given position. In
+// other words, if we're scrolled to x, we need to know which element is the first to end after that position (that's
+// our minimum).
 const findNearestItem = (posIndexPairs, pos, left = true) => {
   let high = posIndexPairs.length;
   let low = 0;
@@ -24,7 +26,6 @@ const findNearestItem = (posIndexPairs, pos, left = true) => {
 };
 
 // Mostly stolen from https://github.com/bvaughn/react-window
-
 export default ({
   overscan,
   columnCount,
@@ -34,27 +35,27 @@ export default ({
   rowHeight,
   height
 }) => {
+  // This is a straight "if we've seen this scroll position before, use it" memo table. Since scroll positions are at
+  // the pixel level, it seems unlikely we'd have a lot of hits. But if we do, they're stored here!
   const granularMemo = useRef({
     rows: {},
     cols: {}
   });
+
+  // We compute ahead of time the sizes and positions of all our elements. It's a big up-front cost, but we can't risk
+  // having to do it on-the-fly as they're scrolling.
   const [colSizes, colPositions] = useMemo(() => {
+    // If any sizes or positions change, our granular memo table is invalidated
     granularMemo.current.cols = {};
 
     let isFunc = typeof columnWidth === "function";
+    // First element is at position 0
     const positions = [0];
     const sizes = [isFunc ? columnWidth(0) : columnWidth];
 
-    // let last = 0;
-    // for (let i = 1; i < rowCount; ++i) {
-    //   let point =
-    //     last + (typeof rowHeight === "function" ? rowHeight(i) : rowHeight);
-    //   keys.rows.push(point);
-    //   last = point;
-    // }
-
     let last = 0;
     for (let i = 1; i < columnCount; ++i) {
+      // The position is the previous position plus the size of the last element.
       let point = last + sizes[i - 1];
       positions.push(point);
       last = point;
@@ -64,6 +65,7 @@ export default ({
     return [sizes, positions];
   }, [columnCount, columnWidth]);
 
+  // Same as columns but rows
   const [rowSizes, rowPositions] = useMemo(() => {
     granularMemo.current.rows = {};
     let isFunc = typeof rowHeight === "function";
@@ -81,6 +83,8 @@ export default ({
     return [sizes, positions];
   }, [rowCount, rowHeight]);
 
+  // If the overscan value changes, we don't need to recompute all the sizes/positions, but it still invalidates the
+  // granular memo table.
   useEffect(() => {
     granularMemo.current = {
       rows: {},
