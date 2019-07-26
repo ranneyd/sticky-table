@@ -1,5 +1,7 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+Demo made with the lovely [Storybook Project](https://github.com/storybookjs/storybook).
+
 This is a remake of [the incredible react-window lib by @bvaughn](https://github.com/bvaughn/react-window). It has
 optionally "locked" headers on all sides implemented with `position: sticky`.
 
@@ -23,8 +25,5 @@ There are ways to work around it, namely [this library](https://github.com/dolla
 
 # `npm start`
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+Runs the storybook demo.
+Open [http://localhost:6006/](http://localhost:6006/) to view it in the browser.
