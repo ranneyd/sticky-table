@@ -233,7 +233,7 @@ const FakeBorder = React.memo(style => (
 
 // Basic cell renderer. If someone wants to provide a custom function but only wants to change it slightly from the
 // default, they can use a wrapper around this.
-export const basicRenderer = ({ data, style, classes }) => (
+export const basicRenderer = ({ data, style = {}, classes = [] }) => (
   <div style={style} className={classes.join(" ")}>
     {data}
   </div>

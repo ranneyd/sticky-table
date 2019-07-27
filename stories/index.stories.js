@@ -4,12 +4,13 @@ import { storiesOf } from "@storybook/react";
 import { withKnobs, boolean, number } from "@storybook/addon-knobs";
 
 import BasicStickyTable from "./BasicStickyTable";
+import SortTable from "./SortTable";
 
 import "../src/index.css";
 
-const stickyStories = storiesOf("StickyTable", module);
-
-stickyStories.addDecorator(withKnobs);
+const stickyStories = storiesOf("StickyTable", module)
+  .addDecorator(withInfo)
+  .addDecorator(withKnobs);
 
 stickyStories.add("Basic", () => (
   <BasicStickyTable
@@ -36,5 +37,12 @@ stickyStories.add("Basic", () => (
       'Use Dynamic Row Heights (overrides "Row Height" above)',
       false
     )}
+  />
+));
+stickyStories.add("Sort", () => (
+  <SortTable
+    width={number("Width", 900)}
+    height={number("Height", 400)}
+    usingCustomRenderer={boolean("Use custom header render function", false)}
   />
 ));
