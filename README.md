@@ -5,6 +5,8 @@ Demo made with the lovely [Storybook Project](https://github.com/storybookjs/sto
 This is a remake of [the incredible react-window lib by @bvaughn](https://github.com/bvaughn/react-window). It has
 optionally "locked" headers on all sides implemented with `position: sticky`.
 
+[Live Demo](https://ranneyd.github.io/sticky-table).
+
 # Why
 
 The latest version of Chrome for MacOSX (and it looks like other platforms too) computes scrolling in a separate thread.

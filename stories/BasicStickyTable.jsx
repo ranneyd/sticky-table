@@ -76,9 +76,6 @@ const BasicStickyTable = ({
     }
   }, [colCount, ourColCount]);
 
-  // const [usingColFunc, setUsingColFunc] = useState(false);
-  // const [usingRowFunc, setUsingRowFunc] = useState(false);
-
   let [data, topData, rightData, bottomData, leftData] = useMemo(() => {
     let data = [];
     let topData, rightData, bottomData, leftData;
