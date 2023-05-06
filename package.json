@@ -7,7 +7,7 @@
     "ramda": "^0.26.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-scripts": "3.0.1"
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "start": "NODE_ENV=development; npm run storybook",
@@ -40,7 +40,7 @@
     "@storybook/addon-info": "^5.1.9",
     "@storybook/addon-links": "^5.1.9",
     "@storybook/addons": "^5.1.9",
-    "@storybook/react": "^5.1.9",
+    "@storybook/react": "^7.0.9",
     "@storybook/storybook-deployer": "^2.8.1",
     "babel-loader": "^8.0.6"
   }
